@@ -45,7 +45,7 @@ pub const Chunk = struct {
 
     pub fn addConstant(self: *Chunk, value: Value) !usize {
         try self.constants.append(value);
-        return self.constants.items.len;
+        return self.constants.items.len - 1;
     }
 
     pub fn writeConstant(self: *Chunk, value: Value, line: i64) !void {

@@ -2,6 +2,7 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 const printf = std.debug.print;
 const ValueStack = std.ArrayList(Value);
+const Vec = std.ArrayList;
 
 const chunk_i = @import("chunk.zig");
 const Chunk = chunk_i.Chunk;
@@ -11,7 +12,7 @@ const OpCode = chunk_i.OpCode;
 const debug = @import("debug.zig");
 const compiler = @import("compiler.zig");
 
-const DEBUG_TRACE_EXECUTION: bool = false;
+const DEBUG_TRACE_EXECUTION: bool = true;
 
 const BinaryOp = enum {
     ADD,
@@ -28,7 +29,7 @@ pub const InterpretResult = enum {
 
 pub const VM = struct {
     chunk: *Chunk,
-    ip: [*]u8,
+    ip: Vec(u8),
     stack: ValueStack,
 
     pub fn init(allocator: Allocator) VM {
@@ -44,7 +45,8 @@ pub const VM = struct {
     }
 
     fn printStack(self: *VM) !void {
-        const st_copy = try self.stack.clone();
+        var st_copy = try self.stack.clone();
+        defer st_copy.deinit();
 
         printf("[", .{});
 
@@ -61,10 +63,11 @@ pub const VM = struct {
 
     pub fn interpretFromChunk(self: *VM, chunk: *Chunk) !InterpretResult {
         self.chunk = chunk;
-        self.ip = self.chunk.code.items.ptr;
+        self.ip = self.chunk.code;
         return self.run();
     }
 
+    // TODO: Maybe make this function static
     pub fn interpretFromSource(self: *VM, source: []u8) InterpretResult {
         _ = self; // autofix
         compiler.compile(source);
@@ -85,8 +88,9 @@ pub const VM = struct {
     }
 
     fn readByte(self: *VM) u8 {
-        self.ip += 1;
-        return self.ip[0];
+        // self.ip += 1;
+        // return self.ip[0];
+        return self.ip.orderedRemove(0);
     }
 
     fn readConstant(self: *VM) Value {
@@ -110,7 +114,7 @@ pub const VM = struct {
         while (true) {
             if (comptime DEBUG_TRACE_EXECUTION == true) {
                 printf("        ", .{});
-                self.printStack();
+                try self.printStack();
                 debug.disassembleInstruction(self.chunk, self.ip - self.chunk.code.items.ptr);
             }
 

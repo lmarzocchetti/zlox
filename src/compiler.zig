@@ -10,6 +10,7 @@ pub fn compile(source: []u8) void {
 
     while (true) {
         const token = scanner.scanToken();
+
         if (token.line != line) {
             printf("line: {any}\n", .{token.line});
             line = @intCast(token.line);

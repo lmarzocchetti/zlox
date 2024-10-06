@@ -147,7 +147,7 @@ pub const Scanner = struct {
                 self.tok_len = 0;
                 return self.string();
             },
-            else => unreachable,
+            else => return self.errorToken("Unexpected character."), // TODO: Verify this error token, maybe disallow some things
         }
 
         return self.errorToken("Unexpected character.");
@@ -163,6 +163,10 @@ pub const Scanner = struct {
     }
 
     fn peek(self: *Scanner) u8 {
+        if (self.isAtEnd()) {
+            return 0;
+        }
+
         return self.source[self.current];
     }
 
@@ -262,7 +266,7 @@ pub const Scanner = struct {
     }
 
     fn checkKeyword(self: *Scanner, length: usize, skipped: usize, rest: []const u8, ttype: TokenType) TokenType {
-        if (std.mem.eql(u8, self.source[(self.current - length)..(self.current)], rest) and skipped == length + 1) {
+        if (skipped == length + 1 and std.mem.eql(u8, self.source[(self.current - length)..(self.current)], rest)) {
             return ttype;
         }
 
